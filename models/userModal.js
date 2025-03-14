@@ -15,7 +15,9 @@ const userSchema = new mongoose.Schema({
     status: {
         type: Boolean,
         default: false, // Default to false (logged out)
-    }
+    },
+    photo:{type: String},
+    activity_status: { type: String, required: true, enum: ['Active', 'Inactive'] },
 });
 // Pre-save middleware to automatically generate a unique user_id
 userSchema.pre('save', function (next) {

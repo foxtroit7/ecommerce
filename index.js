@@ -8,7 +8,6 @@ const contactRoutes = require('./routes/contactRoutes')
 const privacyRoutes = require('./routes/privacyRoutes')
 const termsRoutes = require('./routes/termsRoutes')
 const userRoutes = require('./routes/userRoutes')
-const userDetailsRoutes = require('./routes/userDetailsRoutes')
 const productRoutes = require('./routes/productRoutes')
 require('dotenv').config();  
 const path = require('path');
@@ -27,7 +26,6 @@ app.use('/api', contactRoutes);
 app.use('/api', privacyRoutes);
 app.use('/api', termsRoutes);
 app.use('/api', userRoutes);
-app.use('/api', userDetailsRoutes);
 app.use('/api', productRoutes)
 app.listen(5000, () => {
     console.log('Hello');
