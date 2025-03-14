@@ -58,7 +58,7 @@ await user.save();
       status: user.status, 
       name: user.name, 
       user_id: user.user_id , 
-      email: user.user.email,
+      email: user.email,
       phone_number: user.phone_number,
       is_verfied: user.is_verified,
       photo: profilePhoto, 
