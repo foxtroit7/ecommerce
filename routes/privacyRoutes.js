@@ -1,5 +1,5 @@
 const express = require("express");
-const privacy = require("../models/privacyModal"); // Import the model
+const Privacy = require("../models/privacyModal"); // Import the model
 const router = express.Router();
 const { verifyToken } = require("../controllers/verifyToken");
 // ✅ Create privacy API
@@ -11,7 +11,7 @@ router.post("/privacy",verifyToken, async (req, res) => {
             return res.status(400).json({ message: "Content is required" });
         }
 
-        const newprivacy = await privacy.create({ content, time: new Date() });
+        const newprivacy = await Privacy.create({ content, time: new Date() });
 
         res.status(201).json({
             message: "privacy content created successfully",
@@ -26,7 +26,7 @@ router.post("/privacy",verifyToken, async (req, res) => {
 // ✅ Get privacy API (Fetch the latest privacy content)
 router.get("/privacy",verifyToken, async (req, res) => {
     try {
-        const privacy = await privacy.findOne().sort({ updatedAt: -1 }); // Get latest updated entry
+        const privacy = await Privacy.findOne().sort({ updatedAt: -1 }); // Get latest updated entry
 
         if (!privacy) {
             return res.status(404).json({ message: "No privacy details found." });
@@ -51,7 +51,7 @@ router.put("/privacy", async (req, res) => {
             return res.status(400).json({ message: "Content is required" });
         }
 
-        let privacy = await privacy.findOne(); // Find existing document
+        let privacy = await Privacy.findOne(); // Find existing document
 
         if (privacy) {
             privacy.content = content;

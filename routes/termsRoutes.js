@@ -1,5 +1,5 @@
 const express = require("express");
-const terms = require("../models/TermsModal"); // Import the model
+const Terms = require("../models/TermsModal"); // Import the model
 const router = express.Router();
 const { verifyToken } = require("../controllers/verifyToken");
 // ✅ Create terms API
@@ -11,7 +11,7 @@ router.post("/terms",verifyToken, async (req, res) => {
             return res.status(400).json({ message: "Content is required" });
         }
 
-        const newterms = await terms.create({ content, time: new Date() });
+        const newterms = await Terms.create({ content, time: new Date() });
 
         res.status(201).json({
             message: "terms content created successfully",
@@ -26,7 +26,7 @@ router.post("/terms",verifyToken, async (req, res) => {
 // ✅ Get terms API (Fetch the latest terms content)
 router.get("/terms",verifyToken, async (req, res) => {
     try {
-        const terms = await terms.findOne().sort({ updatedAt: -1 }); // Get latest updated entry
+        const terms = await Terms.findOne().sort({ updatedAt: -1 }); // Get latest updated entry
 
         if (!terms) {
             return res.status(404).json({ message: "No terms details found." });

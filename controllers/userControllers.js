@@ -41,8 +41,6 @@ exports.login = async (req, res) => {
   try {
     // Use phone_number for the query
     const user = await User.findOne({ phone_number });
-
-
     // Check if the user is verified
     if (!user.is_verified) {
       return res.status(401).json({ error: "User is not verified" });
