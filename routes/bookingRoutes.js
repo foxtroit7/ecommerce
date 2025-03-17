@@ -48,7 +48,7 @@ router.put('/cancel/:user_id/:booking_id', verifyToken, async (req, res) => {
     const { user_id, booking_id } = req.params;
 
     try {
-        const booking = await Booking.findOne({ _id: booking_id, user_id });
+        const booking = await Booking.findOne({ booking_id });
 
         if (!booking) {
             return res.status(404).json({ message: 'Booking not found' });
@@ -69,14 +69,24 @@ router.put('/cancel/:user_id/:booking_id', verifyToken, async (req, res) => {
  * ✅ **Get All Bookings for a User**
  * @route GET /booking/:user_id
  */
-router.get('/get-booking/:user_id', verifyToken, async (req, res) => {
-    const { user_id } = req.params;
+router.get('/get-booking/:user_id/:booking_id?', verifyToken, async (req, res) => {
+    const { user_id, booking_id } = req.params;
 
     try {
-        const bookings = await Booking.find({ user_id }).sort({ createdAt: -1 });
+        let bookings;
 
-        if (!bookings || bookings.length === 0) {
-            return res.status(404).json({ message: 'No bookings found' });
+        if (booking_id) {
+            // Fetch specific booking by booking_id
+            bookings = await Booking.findOne({ user_id, booking_id });
+            if (!bookings) {
+                return res.status(404).json({ message: 'Booking not found' });
+            }
+        } else {
+            // Fetch all bookings for the user
+            bookings = await Booking.find({ user_id }).sort({ createdAt: -1 });
+            if (!bookings || bookings.length === 0) {
+                return res.status(404).json({ message: 'No bookings found' });
+            }
         }
 
         res.status(200).json(bookings);
@@ -85,5 +95,7 @@ router.get('/get-booking/:user_id', verifyToken, async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
+
+
 
 module.exports = router;
