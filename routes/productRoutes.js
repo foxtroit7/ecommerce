@@ -41,12 +41,32 @@ router.post('/create-product',verifyToken, upload.single('image'), async (req, r
  * 🆕 GET: Fetch all products
  * @route GET /products
  */
-router.get('/get-products',verifyToken, async (req, res) => {
+router.get('/get-product',verifyToken, async (req, res) => {
     try {
         const products = await Product.find();
         res.status(200).json(products);
     } catch (error) {
         console.error('Error fetching products:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+/**
+ * 🆕 GET: Fetch products by `category_id`
+ * @route GET /products/category/:category_id
+ */
+router.get('/get-product/:category_id', verifyToken, async (req, res) => {
+    const { category_id } = req.params;
+
+    try {
+        const products = await Product.find({ category_id });
+
+        if (!products.length) {
+            return res.status(404).json({ message: 'No products found for this category' });
+        }
+
+        res.status(200).json(products);
+    } catch (error) {
+        console.error('Error fetching products by category:', error);
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
@@ -75,19 +95,19 @@ router.get('/get-product/:product_id',verifyToken, async (req, res) => {
  */
 router.put('/edit-product/:product_id',verifyToken, upload.single('image'), async (req, res) => {
     const { product_id } = req.params;
-    const { product_name, category_id, offer_price, actual_price, description } = req.body;
+    const { product_name, category,category_id, offer_price, actual_price, description } = req.body;
 
     try {
-        // Fetch category details
-        const category = await Category.findOne({ category_id });
-        if (!category) {
-            return res.status(400).json({ message: 'Invalid category_id' });
+        // Fetch product details
+        const product = await Product.findOne({ product_id });
+        if (!product) {
+            return res.status(400).json({ message: 'Invalid product_id' });
         }
 
         const updatedFields = {
             product_name,
             category_id,
-            category: category.category, // Update category name
+            category, // Update category name
             offer_price,
             actual_price,
             description

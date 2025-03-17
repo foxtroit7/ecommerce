@@ -1,5 +1,5 @@
 const express = require("express");
-const Terms = require("../models/TermsModal"); // Import the model
+const Terms = require("../models/TermsModal"); 
 const router = express.Router();
 const { verifyToken } = require("../controllers/verifyToken");
 // ✅ Create terms API
@@ -24,7 +24,8 @@ router.post("/terms",verifyToken, async (req, res) => {
 });
 
 // ✅ Get terms API (Fetch the latest terms content)
-router.get("/terms",verifyToken, async (req, res) => {
+// ✅ Get terms API (Fetch the latest terms content)
+router.get("/terms", verifyToken, async (req, res) => {
     try {
         const terms = await Terms.findOne().sort({ updatedAt: -1 }); // Get latest updated entry
 
@@ -33,6 +34,7 @@ router.get("/terms",verifyToken, async (req, res) => {
         }
 
         res.json({
+            id: terms._id, // Explicitly include the ObjectId
             content: terms.content,
             lastUpdated: terms.updatedAt, // This gives last edit date & time
         });
@@ -42,33 +44,40 @@ router.get("/terms",verifyToken, async (req, res) => {
     }
 });
 
-// ✅ Edit terms API
-router.put("/terms", async (req, res) => {
+
+router.put("/terms/:id", verifyToken, async (req, res) => {
     try {
-        const { content } = req.body;
+        const { id } = req.params; // Get ID from URL params
+        const { content } = req.body; // Get new content from request body
 
         if (!content) {
             return res.status(400).json({ message: "Content is required" });
         }
 
-        let terms = await terms.findOne(); // Find existing document
+        // Find and update the term by its `_id`
+        const updatedTerm = await Terms.findByIdAndUpdate(
+            id,
+            { content, time: new Date() }, // Update content and timestamp
+            { new: true } // Return the updated document
+        );
 
-        if (terms) {
-            terms.content = content;
-            terms.time = new Date(); // Store edit time
-            await terms.save();
-        } else {
-            terms = await terms.create({ content, time: new Date() });
+        if (!updatedTerm) {
+            return res.status(404).json({ message: "Term not found." });
         }
 
         res.json({
-            message: "terms content updated successfully",
-            lastUpdated: terms.updatedAt, // Returns the latest timestamp
+            message: "Term updated successfully",
+            term: updatedTerm
         });
     } catch (error) {
-        console.error("Error updating terms details:", error);
+        console.error("Error updating term:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
+
+
+
+// ✅ Edit terms API
+
 
 module.exports = router;

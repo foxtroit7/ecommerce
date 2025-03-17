@@ -9,6 +9,8 @@ const privacyRoutes = require('./routes/privacyRoutes')
 const termsRoutes = require('./routes/termsRoutes')
 const userRoutes = require('./routes/userRoutes')
 const productRoutes = require('./routes/productRoutes')
+const cartRoutes = require('./routes/cartRoutes')
+const bookingRoutes = require('./routes/bookingRoutes')
 require('dotenv').config();  
 const path = require('path');
 const app = express();
@@ -26,7 +28,9 @@ app.use('/api', contactRoutes);
 app.use('/api', privacyRoutes);
 app.use('/api', termsRoutes);
 app.use('/api', userRoutes);
-app.use('/api', productRoutes)
+app.use('/api', productRoutes);
+app.use('/api', cartRoutes);
+app.use('/api', bookingRoutes);
 app.listen(5000, () => {
     console.log('Hello');
 });
