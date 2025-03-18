@@ -19,12 +19,11 @@ router.post('/create/:user_id', verifyToken, async (req, res) => {
         if (!cart || cart.products.length === 0) {
             return res.status(400).json({ message: 'Cart is empty. Add products before booking.' });
         }
-
         // Create a new booking
         const newBooking = new Booking({
             user_id,
             products: cart.products,
-            total_price: cart.total_price,
+            total_price: cart.total_price || null,
             status: 'Pending'  // Default status
         });
 
@@ -95,4 +94,69 @@ router.get('/get-booking/:user_id/:booking_id?', verifyToken, async (req, res) =
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
+
+/**
+ * ✅ **Get All Bookings for Admin with Optional Status Filter**
+ * @route GET /booking/all-bookings?status=Pending
+ */
+router.get('/all-bookings', async (req, res) => {
+    try {
+        const { status } = req.query;
+        let filter = {};
+
+        // Apply status filter if provided
+        if (status) {
+            const validStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+            if (!validStatuses.includes(status)) {
+                return res.status(400).json({ message: `Invalid status. Allowed values: ${validStatuses.join(', ')}` });
+            }
+            filter.status = status;
+        }
+
+        const bookings = await Booking.find(filter).sort({ createdAt: -1 });
+
+        if (!bookings || bookings.length === 0) {
+            return res.status(404).json({ message: 'No bookings found' });
+        }
+
+        res.status(200).json(bookings);
+    } catch (error) {
+        console.error('Error fetching bookings:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+/**
+ * ✅ **Update Booking Status API**
+ * @route PUT /booking/update-status/:booking_id
+ */
+router.put('/update-status/:booking_id', verifyToken, async (req, res) => {
+    const { booking_id } = req.params;
+    const { status } = req.body;
+
+    try {
+        // Validate status input
+        const validStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ message: `Invalid status. Allowed values: ${validStatuses.join(', ')}` });
+        }
+
+        // Find and update the booking status
+        const booking = await Booking.findOneAndUpdate(
+            { _id: booking_id },  // Find booking by ID
+            { status },            // Update status field
+            { new: true }          // Return the updated document
+        );
+
+        if (!booking) {
+            return res.status(404).json({ message: 'Booking not found' });
+        }
+
+        res.status(200).json({ message: 'Booking status updated successfully', booking });
+    } catch (error) {
+        console.error('Error updating booking status:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
 module.exports = router;

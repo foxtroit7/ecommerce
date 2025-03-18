@@ -15,8 +15,9 @@ router.post('/add-cart/:user_id', verifyToken, async (req, res) => {
     const { product_id, quantity = 1 } = req.body;
 
     try {
+    
         // Validate if the user exists
-        const user = await User.findOne({ user_id });
+        const user = await User.findOne({  user_id });
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }

@@ -13,6 +13,7 @@ const bookingSchema = new mongoose.Schema({
         actual_price: { type: Number },
         image: { type: String }
     }],
+    total_price: {type:String},
     order_status: { type: String, enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'], default: 'Pending' }, // Default: Pending
 }, { timestamps: true });
 
