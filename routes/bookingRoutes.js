@@ -95,7 +95,4 @@ router.get('/get-booking/:user_id/:booking_id?', verifyToken, async (req, res) =
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
-
-
-
 module.exports = router;

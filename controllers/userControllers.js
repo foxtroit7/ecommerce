@@ -1,144 +1,128 @@
 const User = require("../models/userModal");
 const { generateOtp, } = require("../services/otpService");
 const { generateToken } = require('../utils/generateToken');
+const bcrypt = require("bcryptjs");
 
-
+// ✅ SIGNUP API (Handles OTP Generation)
 exports.signUp = async (req, res) => {
   const { name, email, phone_number, address } = req.body;
 
-  // Check for missing fields
   if (!name || !email || !phone_number || !address) {
     return res.status(400).json({ error: "All fields are required" });
   }
 
   try {
-    // Check if the user already exists
-    const existingUser = await User.findOne({ phone_number });
-    if (existingUser) {
+    let user = await User.findOne({ phone_number });
+
+    if (!user) {
+      // If user does not exist, create a new one
+      const otp = generateOtp(); // Generate OTP
+      user = new User({
+        name,
+        email,
+        phone_number,
+        address,
+        otp,
+        is_verified: false,
+        first_time_login: true,
+        status: false, // Initially not logged in
+      });
+
+      await user.save();
+      console.log(`Generated OTP for Signup: ${otp}`);
+
+      return res.status(201).json({ message: "User registered successfully. OTP sent." });
+    } else {
       return res.status(400).json({ error: "User already exists with this phone number" });
     }
-   const otp='1111'
-    // Create and save the new user
-    const user = new User({ name, email, phone_number, address, otp });
-    await user.save();
-
-    res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
     console.error("Error in sign-up API:", error);
     res.status(500).json({ error: "Server error" });
   }
 };
 
-
-// Login API
+// ✅ LOGIN API (Handles OTP Verification)
 exports.login = async (req, res) => {
-  const { phone_number} = req.body;
+  const { phone_number, otp } = req.body;
 
-  if (!phone_number) {
-    return res.status(400).json({ error: "Phone number is required" });
+  if (!phone_number || !otp) {
+    return res.status(400).json({ error: "Phone number and OTP are required" });
   }
 
   try {
-    // Use phone_number for the query
     const user = await User.findOne({ phone_number });
-    // Check if the user is verified
-    if (!user.is_verified) {
-      return res.status(401).json({ error: "User is not verified" });
+
+    if (!user) {
+      return res.status(401).json({ error: "User not found. Please sign up first." });
     }
-const user_photo = await User.findOne({ user_id: user.user_id });
-        const profilePhoto = user_photo ? user.photo : null; 
-    // Generate JWT token
-          const token = generateToken(user._id);
-// Update status to true (logged in)
-user.status = true;
-await user.save();
-    res.status(200).json({ message: "Login successful", token, 
-      status: user.status, 
-      name: user.name, 
-      user_id: user.user_id , 
-      email: user.email,
-      phone_number: user.phone_number,
-      is_verfied: user.is_verified,
-      photo: profilePhoto, 
-      address: user.address, 
-      activity_status: user.activity_status
+
+    if (user.otp !== otp) {
+      return res.status(401).json({ error: "Invalid OTP" });
+    }
+
+    // OTP matched – Mark as verified and allow login
+    user.is_verified = true;
+    user.otp = null; // Clear OTP after successful verification
+    user.status = true; // User is now logged in
+
+    // If first-time login, mark it as completed
+    if (user.first_time_login) {
+      user.first_time_login = false;
+    }
+
+    await user.save();
+
+    // Generate JWT Token
+    const token = generateToken(user._id);
+
+    res.status(200).json({
+      message: "Login successful.",
+      token,
+      user: {
+        user_id: user.user_id,
+        name: user.name,
+        email: user.email,
+        phone_number: user.phone_number,
+        is_verified: user.is_verified,
+        first_time_login: user.first_time_login,
+        address: user.address,
+        status: user.status,
+      },
     });
+
   } catch (error) {
     console.error("Error in login API:", error);
     res.status(500).json({ error: "Server error" });
   }
 };
 
-
-// Verify OTP API
-exports.verifyOtp = async (req, res) => {
-  const { phone_number, otp } = req.body;
-console.log(req.body);
-  if (!phone_number || !otp) {
-    return res.status(400).json({ error: "Phone and OTP are required" });
-  }
-
-  try {
-    const user = await User.findOne({ phone_number });
-    if (!otp) {
-      return res.status(401).json({ error: "Invalid OTP" });
-    }
-
-    user.is_verified = true;
-    user.otp = null; // Clear OTP after verification
-    await user.save();
-
-    res.json({ message: "OTP verified successfully" });
-  } catch (error) {
-    res.status(500).json({ error: "Server error" });
-  }
-};
-
-// Generate OTP API (Optional Helper)
-exports.generateOtpForUser = async (req, res) => {
-  const { phone } = req.body;
-
-  if (!phone) {
-    return res.status(400).json({ error: "Phone number is required" });
-  }
-
-  try {
-    const user = await User.findOne({ phone });
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    const otp = generateOtp();
-    user.otp = otp;
-    await user.save();
-
-    console.log(`Generated OTP: ${otp}`); // Log OTP for testing
-    res.json({ message: "OTP generated and sent" });
-  } catch (error) {
-    res.status(500).json({ error: "Server error" });
-  }
-};
-// **Logout Controller**
+// ✅ LOGOUT API (Marks User as Logged Out & Generates New OTP)
 exports.logout = async (req, res) => {
   const { user_id } = req.body;
 
   try {
-      const user = await User.findOne({user_id});
+    const user = await User.findOne({ user_id });
 
-      if (!user) {
-          return res.status(404).json({ message: 'User not found' });
-      }
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-      // Update status to false (logged out)
-      user.status = false;
-      await user.save();
+    user.status = false; // Mark user as logged out
+    user.is_verified = false; // Require OTP verification for next login
 
-      res.status(200).json({ message: 'Logout successful', status: user.status });
+    // Generate new OTP for next login
+    const otp = generateOtp();
+    user.otp = otp;
+    await user.save();
+
+    console.log(`New OTP after logout: ${otp}`); // Log OTP for testing
+    res.status(200).json({ message: "Logout successful. OTP required for next login." });
   } catch (error) {
-      console.error('Error during logout:', error);
-      res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("Error during logout:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 
 // Get Logged-in Users
