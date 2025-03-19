@@ -104,9 +104,6 @@ exports.login = async (req, res) => {
   }
 };
 
-
-
-
 // ✅ LOGOUT API (Marks User as Logged Out & Generates New OTP)
 exports.logout = async (req, res) => {
   const { user_id } = req.body;

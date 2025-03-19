@@ -11,6 +11,7 @@ const router = express.Router();
  */
 router.post('/create/:user_id', verifyToken, async (req, res) => {
     const { user_id } = req.params;
+    const { user_name, delivery_address } = req.body; // Extract from body
 
     try {
         // Fetch cart data
@@ -19,9 +20,17 @@ router.post('/create/:user_id', verifyToken, async (req, res) => {
         if (!cart || cart.products.length === 0) {
             return res.status(400).json({ message: 'Cart is empty. Add products before booking.' });
         }
+
+        // Validate required fields
+        if (!user_name || !delivery_address) {
+            return res.status(400).json({ message: 'User name and delivery address are required.' });
+        }
+
         // Create a new booking
         const newBooking = new Booking({
             user_id,
+            user_name,
+            delivery_address,
             products: cart.products,
             total_price: cart.total_price || null,
             status: 'Pending'  // Default status
@@ -38,6 +47,7 @@ router.post('/create/:user_id', verifyToken, async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
+
 
 /**
  * ✅ **Cancel Booking API**
@@ -101,16 +111,16 @@ router.get('/get-booking/:user_id/:booking_id?', verifyToken, async (req, res) =
  */
 router.get('/all-bookings', async (req, res) => {
     try {
-        const { status } = req.query;
+        const { order_status } = req.query;
         let filter = {};
 
         // Apply status filter if provided
-        if (status) {
+        if (order_status) {
             const validStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
-            if (!validStatuses.includes(status)) {
+            if (!validStatuses.includes(order_status)) {
                 return res.status(400).json({ message: `Invalid status. Allowed values: ${validStatuses.join(', ')}` });
             }
-            filter.status = status;
+            filter.order_status = order_status;
         }
 
         const bookings = await Booking.find(filter).sort({ createdAt: -1 });
@@ -132,19 +142,19 @@ router.get('/all-bookings', async (req, res) => {
  */
 router.put('/update-status/:booking_id', verifyToken, async (req, res) => {
     const { booking_id } = req.params;
-    const { status } = req.body;
+    const { order_status } = req.body;
 
     try {
         // Validate status input
         const validStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
-        if (!validStatuses.includes(status)) {
+        if (!validStatuses.includes(order_status)) {
             return res.status(400).json({ message: `Invalid status. Allowed values: ${validStatuses.join(', ')}` });
         }
 
         // Find and update the booking status
         const booking = await Booking.findOneAndUpdate(
-            { _id: booking_id },  // Find booking by ID
-            { status },            // Update status field
+            { booking_id: booking_id },  // Find booking by ID
+            { order_status },            // Update status field
             { new: true }          // Return the updated document
         );
 
