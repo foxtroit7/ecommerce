@@ -41,6 +41,7 @@ exports.signUp = async (req, res) => {
   }
 };
 
+
 // ✅ LOGIN API (Handles OTP Verification)
 exports.login = async (req, res) => {
   const { phone_number, otp } = req.body;
@@ -56,23 +57,28 @@ exports.login = async (req, res) => {
       return res.status(401).json({ error: "User not found. Please sign up first." });
     }
 
+    // ✅ If OTP is incorrect, return an error
     if (user.otp !== otp) {
       return res.status(401).json({ error: "Invalid OTP" });
     }
 
-    // OTP matched – Mark as verified and allow login
+    // ✅ If the OTP is correct, log the user in (whether they logged out or not)
     user.is_verified = true;
-    user.otp = null; // Clear OTP after successful verification
-    user.status = true; // User is now logged in
+    user.status = true; // Mark user as logged in
+    user.otp = null; // Clear OTP after successful login
 
-    // If first-time login, mark it as completed
+    // ✅ Generate a new OTP for future logins (optional)
+    const newOtp = generateOtp();
+    user.otp = newOtp;
+
+    // ✅ If first-time login, mark it as completed
     if (user.first_time_login) {
       user.first_time_login = false;
     }
 
     await user.save();
 
-    // Generate JWT Token
+    // ✅ Generate JWT Token
     const token = generateToken(user._id);
 
     res.status(200).json({
@@ -90,11 +96,16 @@ exports.login = async (req, res) => {
       },
     });
 
+    console.log(`New OTP for future login: ${newOtp}`); // Log new OTP for testing
+
   } catch (error) {
     console.error("Error in login API:", error);
     res.status(500).json({ error: "Server error" });
   }
 };
+
+
+
 
 // ✅ LOGOUT API (Marks User as Logged Out & Generates New OTP)
 exports.logout = async (req, res) => {
