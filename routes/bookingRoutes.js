@@ -140,7 +140,7 @@ router.get('/all-bookings', async (req, res) => {
  * ✅ **Update Booking Status API**
  * @route PUT /booking/update-status/:booking_id
  */
-router.put('/update-status/:booking_id', verifyToken, async (req, res) => {
+router.put('/update-status/:booking_id',  async (req, res) => {
     const { booking_id } = req.params;
     const { order_status } = req.body;
 

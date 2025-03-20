@@ -7,5 +7,5 @@ exports.generateToken = (user_id, isAdmin = false) => {
     const payload = { user_id, role };
 
     // Generate token with 48-hour expiration
-    return jwt.sign(payload, JWT_SECRET_KEY, { expiresIn: "48h" });
+    return jwt.sign(payload, JWT_SECRET_KEY, { expiresIn: "96h" });
 };

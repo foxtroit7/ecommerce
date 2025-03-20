@@ -136,7 +136,7 @@ exports.logout = async (req, res) => {
 // Get Logged-in Users
 exports.getLoggedInUsers = async (req, res) => {
   try {
-    const users = await User.find({ status: true }).select(
+    const users = await User.find().select(
       "status name user_id email phone_number is_verified photo address activity_status"
     );
     res.status(200).json(users);
