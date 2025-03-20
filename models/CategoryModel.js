@@ -6,8 +6,6 @@ const categorySchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true, 
-      enum: ['Electronics', 'Fashion', 'Home & Kitchen', 'Sports & Outdoors'],
-      message: '{VALUE} is not a valid category_name',
     },
     photo: { type: String },
     category_id: { 
