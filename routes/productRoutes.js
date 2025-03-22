@@ -54,7 +54,7 @@ router.get('/get-product',verifyToken, async (req, res) => {
  * 🆕 GET: Fetch products by `category_id`
  * @route GET /products/category/:category_id
  */
-router.get('/get-product/:category_id', verifyToken, async (req, res) => {
+router.get('/get-product-category/:category_id', verifyToken, async (req, res) => {
     const { category_id } = req.params;
 
     try {

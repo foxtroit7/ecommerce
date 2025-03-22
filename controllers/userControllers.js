@@ -1,9 +1,38 @@
 const User = require("../models/userModal");
-const { generateOtp, } = require("../services/otpService");
-const { generateToken } = require('../utils/generateToken');
-const bcrypt = require("bcryptjs");
+const  generateOtp = require("../services/generateOtp");
+const { generateToken } = require("../utils/generateToken"); 
+const axios = require("axios");
 
-// ✅ SIGNUP API (Handles OTP Generation)
+// ✅ Function to send OTP via MSG91
+const sendOtp = async (phone_number, otp) => {
+  const apiKey = "443215AFsHLWhDFo67d11830P1";
+  const sender = "DIGHAK"; // Example: "TXTLCL"
+  const templateId = "67d1171cd6fc05772778bde3"; // Get from MSG91
+  
+  const url = `https://control.msg91.com/api/v5/otp?authkey=${apiKey}&mobile=${phone_number}&otp=${otp}&sender=${sender}&template_id=${templateId}`;
+
+  try {
+    await axios.get(url);
+  } catch (error) {
+    console.error("Error sending OTP:", error);
+  }
+};
+
+// ✅ Function to verify OTP via MSG91
+const verifyOtp = async (phone_number, otp) => {
+  const apiKey = "443215AFsHLWhDFo67d11830P1";
+  const url = `https://control.msg91.com/api/v5/otp/verify?authkey=${apiKey}&mobile=${phone_number}&otp=${otp}`;
+
+  try {
+    const response = await axios.get(url);
+    return response.data;
+  } catch (error) {
+    console.error("Error verifying OTP:", error);
+    return null;
+  }
+};
+
+// ✅ SIGNUP API (Generates OTP After Signup)
 exports.signUp = async (req, res) => {
   const { name, email, phone_number, address } = req.body;
 
@@ -16,34 +45,33 @@ exports.signUp = async (req, res) => {
 
     if (!user) {
       // If user does not exist, create a new one
-      const otp = generateOtp(); // Generate OTP
       user = new User({
         name,
         email,
         phone_number,
         address,
-        otp,
         is_verified: false,
         first_time_login: true,
         status: false, // Initially not logged in
       });
-
       await user.save();
-      console.log(`Generated OTP for Signup: ${otp}`);
-
-      return res.status(201).json({ message: "User registered successfully. OTP sent." });
-    } else {
-      return res.status(400).json({ error: "User already exists with this phone number" });
     }
+
+    // Generate and send OTP
+    const otp = generateOtp();
+    user.otp = otp;
+    await user.save();
+    await sendOtp(phone_number, otp);
+
+    return res.status(201).json({ message: "OTP sent for verification." });
   } catch (error) {
     console.error("Error in sign-up API:", error);
     res.status(500).json({ error: "Server error" });
   }
 };
 
-
-// ✅ LOGIN API (Handles OTP Verification)
-exports.login = async (req, res) => {
+// ✅ VERIFY OTP API (Checks OTP for Verification)
+exports.verifyOtp = async (req, res) => {
   const { phone_number, otp } = req.body;
 
   if (!phone_number || !otp) {
@@ -52,51 +80,54 @@ exports.login = async (req, res) => {
 
   try {
     const user = await User.findOne({ phone_number });
-
     if (!user) {
-      return res.status(401).json({ error: "User not found. Please sign up first." });
+      return res.status(404).json({ error: "User not found" });
     }
 
-    // ✅ If OTP is incorrect, return an error
-    if (user.otp !== otp) {
+    // ✅ Verify OTP using MSG91
+    const otpVerification = await verifyOtp(phone_number, otp);
+    if (!otpVerification || otpVerification.type !== "success") {
       return res.status(401).json({ error: "Invalid OTP" });
     }
 
-    // ✅ If the OTP is correct, log the user in (whether they logged out or not)
+    // ✅ Mark user as verified and logged in
     user.is_verified = true;
-    user.status = true; // Mark user as logged in
-    user.otp = null; // Clear OTP after successful login
+    user.status = true;
+    await user.save();  
 
-    // ✅ Generate a new OTP for future logins (optional)
-    const newOtp = generateOtp();
-    user.otp = newOtp;
+    // ✅ Generate token
+    const token = generateToken(phone_number);
+    
+    return res.status(200).json({ message: "OTP verified successfully.", token, user });
 
-    // ✅ If first-time login, mark it as completed
-    if (user.first_time_login) {
-      user.first_time_login = false;
+  } catch (error) {
+    console.error("Error in OTP verification API:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+
+exports.sendOtpApi = async (req, res) => {
+  const { phone_number } = req.body;
+
+  if (!phone_number) {
+    return res.status(400).json({ error: "Phone number is required" });
+  }
+
+  try {
+    const user = await User.findOne({ phone_number });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found. Please sign up first." });
     }
 
+    // ✅ Generate OTP and send it
+    const otp = generateOtp();
+    user.otp = otp;
     await user.save();
+    await sendOtp(phone_number, otp);
 
-    // ✅ Generate JWT Token
-    const token = generateToken(user._id);
-
-    res.status(200).json({
-      message: "Login successful.",
-      token,
-      user: {
-        user_id: user.user_id,
-        name: user.name,
-        email: user.email,
-        phone_number: user.phone_number,
-        is_verified: user.is_verified,
-        first_time_login: user.first_time_login,
-        address: user.address,
-        status: user.status,
-      },
-    });
-
-    console.log(`New OTP for future login: ${newOtp}`); // Log new OTP for testing
+    return res.status(200).json({ message: "OTP sent successfully." });
 
   } catch (error) {
     console.error("Error in login API:", error);
@@ -104,32 +135,31 @@ exports.login = async (req, res) => {
   }
 };
 
-// ✅ LOGOUT API (Marks User as Logged Out & Generates New OTP)
+
+
+// ✅ LOGOUT API (Marks User as Logged Out & Generates New OTP for Next Login)
 exports.logout = async (req, res) => {
-  const { user_id } = req.body;
+  const { phone_number } = req.body;
 
   try {
-    const user = await User.findOne({ user_id });
+    const user = await User.findOne({ phone_number });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
     user.status = false; // Mark user as logged out
-    user.is_verified = false; // Require OTP verification for next login
-
-    // Generate new OTP for next login
-    const otp = generateOtp();
-    user.otp = otp;
+    user.is_verified = false; // Require OTP for next login
     await user.save();
 
-    console.log(`New OTP after logout: ${otp}`); // Log OTP for testing
-    res.status(200).json({ message: "Logout successful. OTP required for next login." });
+    res.status(200).json({ message: "Logout successful. Next time, OTP will be required." });
   } catch (error) {
     console.error("Error during logout:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+
 
 
 

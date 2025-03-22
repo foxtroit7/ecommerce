@@ -1,11 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const { validateSignup } = require('../middlewares/user_validate');
-const { signUp,logout, getLoggedInUsers, getUserById, deleteUserById, updateUserById, login } = require("../controllers/userControllers");
+const { signUp,logout, getLoggedInUsers, getUserById, deleteUserById, updateUserById, verifyOtp, sendOtpApi } = require("../controllers/userControllers");
 const { verifyToken } = require("../controllers/verifyToken");
 // Routes
 router.post("/sign-up",validateSignup, signUp);   
-router.post("/login", login);
+router.post("/login", verifyOtp);
+router.post("/send-otp", sendOtpApi);
 router.post('/logout',verifyToken, logout);
 router.get('/user/details',verifyToken, getLoggedInUsers);
 router.get('/user/details/:user_id',verifyToken, getUserById);
