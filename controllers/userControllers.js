@@ -42,7 +42,10 @@ exports.signUp = async (req, res) => {
 
   try {
     let user = await User.findOne({ phone_number });
-
+  // ✅ If user already exists, return an error
+  if (user) {
+    return res.status(400).json({ error: "User already registered. Please log in." });
+  }
     if (!user) {
       // If user does not exist, create a new one
       user = new User({
