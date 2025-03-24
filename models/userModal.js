@@ -7,7 +7,6 @@ const userSchema = new mongoose.Schema({
     unique: true, // Ensure the user_id is unique
 },
   name: { type: String, required: true },
-  email: { type: String},
   phone_number: { type: String, required: true},
   address: { type: String, required: true },
   otp: { type: String}, 
