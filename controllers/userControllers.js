@@ -34,9 +34,9 @@ const verifyOtp = async (phone_number, otp) => {
 
 // ✅ SIGNUP API (Generates OTP After Signup)
 exports.signUp = async (req, res) => {
-  const { name, email, phone_number, address } = req.body;
+  const { name, phone_number, address } = req.body;
 
-  if (!name || !email || !phone_number || !address) {
+  if (!name || !phone_number || !address) {
     return res.status(400).json({ error: "All fields are required" });
   }
 
@@ -50,7 +50,6 @@ exports.signUp = async (req, res) => {
       // If user does not exist, create a new one
       user = new User({
         name,
-        email,
         phone_number,
         address,
         is_verified: false,
@@ -170,7 +169,7 @@ exports.logout = async (req, res) => {
 exports.getLoggedInUsers = async (req, res) => {
   try {
     const users = await User.find().select(
-      "status name user_id email phone_number is_verified photo address activity_status"
+      "status name user_id  phone_number is_verified photo address activity_status"
     );
     res.status(200).json(users);
   } catch (error) {
@@ -184,7 +183,7 @@ exports.getUserById = async (req, res) => {
   const { user_id } = req.params;
   try {
     const user = await User.findOne({ user_id }).select(
-      "status name user_id email phone_number is_verified photo address activity_status"
+      "status name user_id  phone_number is_verified photo address activity_status"
     );
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -199,11 +198,11 @@ exports.getUserById = async (req, res) => {
 // Update User by user_id
 exports.updateUserById = async (req, res) => {
   const { user_id } = req.params;
-  const { name, email, phone_number, address } = req.body;
+  const { name, phone_number, address } = req.body;
   try {
     const user = await User.findOneAndUpdate(
       { user_id },
-      { name, email, phone_number, address },
+      { name, phone_number, address },
       { new: true }
     );
     if (!user) {

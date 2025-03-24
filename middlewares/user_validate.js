@@ -7,14 +7,6 @@ exports.validateSignup = [
     .isLength({ min: 3 })
     .withMessage("Name must be at least 3 characters"),
 
-  body("email")
-    .notEmpty()
-    .withMessage("Email Id is required")
-    .isEmail()
-    .withMessage("Invalid email format")
-    .isLength({ min: 5 })
-    .withMessage("Email must be at least 5 characters"),
-
   body("phone_number")
     .matches(/^\d{10}$/)
     .withMessage("Phone number must be exactly 10 digits"),
