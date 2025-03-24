@@ -31,6 +31,7 @@ router.post('/create/:user_id', verifyToken, async (req, res) => {
             user_id,
             user_name,
             delivery_address,
+            phone_number,
             products: cart.products,
             total_price: cart.total_price || null,
             status: 'Pending'  // Default status
@@ -47,7 +48,6 @@ router.post('/create/:user_id', verifyToken, async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
-
 
 /**
  * ✅ **Cancel Booking API**

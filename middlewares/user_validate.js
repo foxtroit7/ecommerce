@@ -1,16 +1,39 @@
-const { body, validationResult } = require('express-validator');
+const { body, validationResult } = require("express-validator");
 
 exports.validateSignup = [
-    body('name').not().isEmpty().withMessage('Name is required').isLength({ min: 3 }).withMessage('Name must be at least 3 characters'),
-    body('email').not().isEmpty().withMessage('Email Id is required').isLength({ min: 5 }).withMessage('email must be at least 5 characters'),
-    body('phone_number').isMobilePhone().withMessage('Invalid phone number').isLength({ min: 10, max: 12 }).withMessage('Phone number must be valid'),
-    body('address').not().isEmpty().withMessage('address is required').isLength({ min: 2}).withMessage('write your city name'),
+  body("name")
+    .notEmpty()
+    .withMessage("Name is required")
+    .isLength({ min: 3 })
+    .withMessage("Name must be at least 3 characters"),
 
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
-        next();
+  body("email")
+    .notEmpty()
+    .withMessage("Email Id is required")
+    .isEmail()
+    .withMessage("Invalid email format")
+    .isLength({ min: 5 })
+    .withMessage("Email must be at least 5 characters"),
+
+  body("phone_number")
+    .matches(/^\d{10}$/)
+    .withMessage("Phone number must be exactly 10 digits"),
+
+  body("address")
+    .notEmpty()
+    .withMessage("Address is required")
+    .isLength({ min: 2 })
+    .withMessage("Write your city name"),
+
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
+
+    // **Prepend "91" before storing**
+    req.body.phone_number = `91${req.body.phone_number}`;
+    
+    next();
+  },
 ];
