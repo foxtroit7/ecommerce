@@ -11,7 +11,7 @@ const router = express.Router();
  */
 router.post('/create/:user_id', verifyToken, async (req, res) => {
     const { user_id } = req.params;
-    const { user_name, delivery_address } = req.body; // Extract from body
+    const { user_name, delivery_address, phone_number } = req.body; // Extract from body
 
     try {
         // Fetch cart data
@@ -140,7 +140,7 @@ router.get('/all-bookings', async (req, res) => {
  * ✅ **Update Booking Status API**
  * @route PUT /booking/update-status/:booking_id
  */
-router.put('/update-status/:booking_id',  async (req, res) => {
+router.put('/update-status/:booking_id',verifyToken,  async (req, res) => {
     const { booking_id } = req.params;
     const { order_status } = req.body;
 
@@ -166,6 +166,28 @@ router.put('/update-status/:booking_id',  async (req, res) => {
     } catch (error) {
         console.error('Error updating booking status:', error);
         res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+
+router.get('/search-booking', async (req, res) => {
+    try {
+        const { booking_id } = req.query;
+
+        if (!booking_id) {
+            return res.status(400).json({ message: "Booking ID is required" });
+        }
+
+        const booking = await Booking.findOne({ booking_id });
+
+        if (!booking) {
+            return res.status(404).json({ message: "No booking found with this ID" });
+        }
+
+        res.status(200).json(booking);
+    } catch (error) {
+        console.error("Error searching booking:", error);
+        res.status(500).json({ message: "Internal Server Error" });
     }
 });
 

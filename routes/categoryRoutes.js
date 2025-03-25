@@ -107,4 +107,5 @@ router.put('/category/:category_id', verifyToken, upload.single('photo'), async 
   }
 });
 
+
 module.exports = router;

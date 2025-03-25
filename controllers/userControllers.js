@@ -177,6 +177,33 @@ exports.getLoggedInUsers = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+// Get Logged-in Users with Optional Search by Name
+exports.getLoggedInUsers = async (req, res) => {
+  try {
+    const { name } = req.query; // Get search query from request
+
+    let filter = {}; // Default filter (empty = fetch all users)
+
+    // If a name is provided, apply case-insensitive search
+    if (name) {
+      filter.name = { $regex: new RegExp(name, "i") }; 
+    }
+
+    const users = await User.find(filter).select(
+      "status name user_id phone_number is_verified photo address activity_status"
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({ message: "No users found" });
+    }
+
+    res.status(200).json(users);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
 
 // Get User by user_id
 exports.getUserById = async (req, res) => {

@@ -5,7 +5,11 @@ const bookingSchema = new mongoose.Schema({
     user_id: { type: String, ref: 'User' },  // User reference
     user_name: { type: String},
     delivery_address: { type: String},
-    phone_number: {type: String},
+    phone_number: { 
+        type: String, 
+        required: true,
+        match: [/^\d{10}|\d{12}$/, "Phone number must be either 10 or 12 digits long"] 
+    },
     total_order_value: { type: Number,},
     products: [{  
         product_id: { type: String},  
