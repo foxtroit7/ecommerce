@@ -11,37 +11,39 @@ const router = express.Router();
  */
 router.post('/create/:user_id', verifyToken, async (req, res) => {
     const { user_id } = req.params;
-    const { user_name, delivery_address, phone_number } = req.body; // Extract from body
+    const { user_name, delivery_address, phone_number } = req.body; 
+
     try {
-        // Fetch cart data
         const cart = await Cart.findOne({ user_id });
 
         if (!cart || cart.products.length === 0) {
             return res.status(400).json({ message: 'Cart is empty. Add products before booking.' });
         }
-                // Validate required fields
+
         if (!user_name || !delivery_address) {
             return res.status(400).json({ message: 'User name and delivery address are required.' });
         }
-        // Find the first product (assuming you need a single quantity value)
-        const product = cart.products.find(p => p.product_id);
-        const totalQuantity = product ? product.quantity : 1; 
-        // Create a new booking
+
+        // console.log("Cart products before mapping:", cart.products);
+
+        const bookedProducts = cart.products.map(p => ({
+            ...p.toObject(), // Ensure full object is taken if using Mongoose
+            quantity: p.quantity || 1  
+        }));
+
+        // console.log("Mapped booked products:", bookedProducts);
+
         const newBooking = new Booking({
             user_id,
             user_name,
             delivery_address,
             phone_number,
-            products: cart.products,
-            quantity: totalQuantity,
+            products: bookedProducts,  
             total_price: cart.total_price || null,
-            status: 'Pending'  // Default status
+            status: 'Pending'
         });
 
         await newBooking.save();
-     
-
-        // Clear the cart after booking is created
         await Cart.findOneAndDelete({ user_id });
 
         res.status(201).json({ message: 'Booking created successfully', booking: newBooking });
@@ -50,6 +52,8 @@ router.post('/create/:user_id', verifyToken, async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
+
+
 
 /**
  * ✅ **Cancel Booking API**

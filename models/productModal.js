@@ -8,7 +8,8 @@ const productSchema = new mongoose.Schema({
     category: { type: String, required: true }, // Store category name for quick access
     offer_price: { type: Number, required: true },
     actual_price: { type: Number, required: true },
-    description: { type: String, required: true }
+    description: { type: String, required: true },
+    quantity: {type: String}
 }, { timestamps: true });
 
 // Generate a unique product_id (PRO + 5-digit number)

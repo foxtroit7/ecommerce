@@ -53,7 +53,7 @@ router.post('/add-cart/:user_id', verifyToken, async (req, res) => {
                 quantity: quantity
             });
         }
-
+console.log(cart.products)
         // Update total price
         cart.total_price = cart.products.reduce((total, p) => total + (p.offer_price * p.quantity), 0);
 
