@@ -120,7 +120,6 @@ router.get('/all-bookings', async (req, res) => {
         const { order_status } = req.query;
         let filter = {};
 
-        // Apply status filter if provided
         if (order_status) {
             const validStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
             if (!validStatuses.includes(order_status)) {
@@ -129,7 +128,8 @@ router.get('/all-bookings', async (req, res) => {
             filter.order_status = order_status;
         }
 
-        const bookings = await Booking.find(filter).sort({ createdAt: -1 });
+        // Fetch bookings with product details including quantity
+        const bookings = await Booking.find(filter).sort({ createdAt: -1 }).lean();
 
         if (!bookings || bookings.length === 0) {
             return res.status(404).json({ message: 'No bookings found' });
@@ -141,6 +141,7 @@ router.get('/all-bookings', async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
+
 
 /**
  * ✅ **Update Booking Status API**
