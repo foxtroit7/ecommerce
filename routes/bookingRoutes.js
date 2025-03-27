@@ -12,7 +12,6 @@ const router = express.Router();
 router.post('/create/:user_id', verifyToken, async (req, res) => {
     const { user_id } = req.params;
     const { user_name, delivery_address, phone_number } = req.body; // Extract from body
-
     try {
         // Fetch cart data
         const cart = await Cart.findOne({ user_id });
@@ -20,7 +19,7 @@ router.post('/create/:user_id', verifyToken, async (req, res) => {
         if (!cart || cart.products.length === 0) {
             return res.status(400).json({ message: 'Cart is empty. Add products before booking.' });
         }
-
+        const totalQuantity = cart.products.reduce((total, product) => total + product.quantity, 0);
         // Validate required fields
         if (!user_name || !delivery_address) {
             return res.status(400).json({ message: 'User name and delivery address are required.' });
@@ -33,11 +32,13 @@ router.post('/create/:user_id', verifyToken, async (req, res) => {
             delivery_address,
             phone_number,
             products: cart.products,
+            quantity: totalQuantity,
             total_price: cart.total_price || null,
             status: 'Pending'  // Default status
         });
 
         await newBooking.save();
+     
 
         // Clear the cart after booking is created
         await Cart.findOneAndDelete({ user_id });
