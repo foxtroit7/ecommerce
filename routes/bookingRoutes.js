@@ -19,12 +19,13 @@ router.post('/create/:user_id', verifyToken, async (req, res) => {
         if (!cart || cart.products.length === 0) {
             return res.status(400).json({ message: 'Cart is empty. Add products before booking.' });
         }
-        const totalQuantity = cart.products.reduce((total, product) => total + product.quantity, 0);
-        // Validate required fields
+                // Validate required fields
         if (!user_name || !delivery_address) {
             return res.status(400).json({ message: 'User name and delivery address are required.' });
         }
-
+        // Find the first product (assuming you need a single quantity value)
+        const product = cart.products.find(p => p.product_id);
+        const totalQuantity = product ? product.quantity : 1; 
         // Create a new booking
         const newBooking = new Booking({
             user_id,
