@@ -1,4 +1,4 @@
-const generateOtp = () => {
+const generateOtp = (phone_number) => {
   if (phone_number === "9999999999") {
     return "999999"; // fixed OTP for testing
   }

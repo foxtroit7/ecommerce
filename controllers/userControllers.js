@@ -67,7 +67,7 @@ exports.signUp = async (req, res) => {
     }
 
     // Generate and send OTP
-    const otp = generateOtp();
+    const otp = generateOtp(phone_number);
     user.otp = otp;
     await user.save();
     await sendOtp(phone_number, otp);
@@ -131,7 +131,7 @@ exports.sendOtpApi = async (req, res) => {
     }
 
     // ✅ Generate OTP and send it
-    const otp = generateOtp();
+    const otp = generateOtp(phone_number);
     user.otp = otp;
     await user.save();
     await sendOtp(phone_number, otp);
