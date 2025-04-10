@@ -39,7 +39,6 @@ const verifyOtp = async (phone_number, otp) => {
   }
 };
 
-// ✅ SIGNUP API (Generates OTP After Signup)
 exports.signUp = async (req, res) => {
   const { name, phone_number, address } = req.body;
 
@@ -47,37 +46,43 @@ exports.signUp = async (req, res) => {
     return res.status(400).json({ error: "All fields are required" });
   }
 
+  // ✅ Add '91' prefix if it's not already present
+  const formattedNumber = phone_number.startsWith('91') 
+    ? phone_number 
+    : `91${phone_number}`;
+
   try {
-    let user = await User.findOne({ phone_number });
-  // ✅ If user already exists, return an error
-  if (user) {
-    return res.status(400).json({ error: "User already registered. Please log in." });
-  }
-    if (!user) {
-      // If user does not exist, create a new one
-      user = new User({
-        name,
-        phone_number,
-        address,
-        is_verified: false,
-        first_time_login: true,
-        status: false, // Initially not logged in
-      });
-      await user.save();
+    let user = await User.findOne({ phone_number: formattedNumber });
+
+    if (user) {
+      return res.status(400).json({ error: "User already registered. Please log in." });
     }
 
-    // Generate and send OTP
-    const otp = generateOtp(phone_number);
+    // ✅ Create new user with formatted phone number
+    user = new User({
+      name,
+      phone_number: formattedNumber,
+      address,
+      is_verified: false,
+      first_time_login: true,
+      status: false,
+    });
+    await user.save();
+
+    // ✅ Generate and send OTP with formatted number
+    const otp = generateOtp(formattedNumber);
     user.otp = otp;
     await user.save();
-    await sendOtp(phone_number, otp);
+    await sendOtp(formattedNumber, otp);
 
     return res.status(201).json({ message: "OTP sent for verification." });
+
   } catch (error) {
     console.error("Error in sign-up API:", error);
     res.status(500).json({ error: "Server error" });
   }
 };
+
 
 // ✅ VERIFY OTP API (Checks OTP for Verification)
 exports.verifyOtp = async (req, res) => {
