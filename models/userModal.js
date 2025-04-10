@@ -25,5 +25,11 @@ userSchema.pre('save', function (next) {
   }
   next();
 });
+userSchema.pre('save', function (next) {
+  if (this.phone_number && !this.phone_number.startsWith('91')) {
+    this.phone_number = `91${this.phone_number}`;
+  }
+  next();
+});
 const User = module.exports = mongoose.model('services', userSchema);
 module.exports = User;

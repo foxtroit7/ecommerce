@@ -22,10 +22,6 @@ exports.validateSignup = [
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-
-    // **Prepend "91" before storing**
-    req.body.phone_number = `91${req.body.phone_number}`;
-    
     next();
   },
 ];

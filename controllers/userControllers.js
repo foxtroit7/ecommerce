@@ -5,7 +5,7 @@ const axios = require("axios");
 
 // ✅ Function to send OTP via MSG91
 const sendOtp = async (phone_number, otp) => {
-  if (phone_number === "9999999999") {
+  if (phone_number === "919999999999") {
     console.log(`Test OTP for ${phone_number} is ${otp}`);
     return;
   }
@@ -24,7 +24,7 @@ const sendOtp = async (phone_number, otp) => {
 
 // ✅ Function to verify OTP via MSG91
 const verifyOtp = async (phone_number, otp) => {
-  if (phone_number === "9999999999" && otp === "999999") {
+  if (phone_number === "919999999999" && otp === "999999") {
     return { type: "success" }; // simulate success
   }
   const apiKey = "443215AFsHLWhDFo67d11830P1";
