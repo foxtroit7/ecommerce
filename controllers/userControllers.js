@@ -86,12 +86,13 @@ exports.signUp = async (req, res) => {
 
 // ✅ VERIFY OTP API (Checks OTP for Verification)
 exports.verifyOtp = async (req, res) => {
-  const { phone_number, otp } = req.body;
+  let { phone_number, otp } = req.body;
 
   if (!phone_number || !otp) {
     return res.status(400).json({ error: "Phone number and OTP are required" });
   }
-
+  // ✅ Ensure '91' is prefixed
+  phone_number = phone_number.startsWith("91") ? phone_number : `91${phone_number}`;
   try {
     const user = await User.findOne({ phone_number });
     if (!user) {
@@ -122,8 +123,9 @@ exports.verifyOtp = async (req, res) => {
 
 
 exports.sendOtpApi = async (req, res) => {
-  const { phone_number } = req.body;
-
+  let { phone_number } = req.body;
+ // ✅ Ensure '91' is prefixed
+ phone_number = phone_number.startsWith("91") ? phone_number : `91${phone_number}`;
   if (!phone_number) {
     return res.status(400).json({ error: "Phone number is required" });
   }
@@ -172,10 +174,6 @@ exports.logout = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
-
-
-
 
 // Get Logged-in Users
 exports.getLoggedInUsers = async (req, res) => {
