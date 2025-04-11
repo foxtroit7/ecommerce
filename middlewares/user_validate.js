@@ -7,10 +7,10 @@ exports.validateSignup = [
     .isLength({ min: 3 })
     .withMessage("Name must be at least 3 characters"),
 
-  body("phone_number")
-    .matches(/^\d{10}$/)
-    .withMessage("Phone number must be exactly 10 digits"),
-
+    body("phone_number")
+    .matches(/^\d{10,12}$/)
+    .withMessage("Phone number must be a number with 10 to 12 digits"),
+  
   body("address")
     .notEmpty()
     .withMessage("Address is required")
