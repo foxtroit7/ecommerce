@@ -7,8 +7,7 @@ const bookingSchema = new mongoose.Schema({
     delivery_address: { type: String},
     phone_number: { 
         type: String, 
-        required: true,
-        match: [/^\d{10}|\d{12}$/, "Phone number must be either 10 or 12 digits long"] 
+        required: true
     },
     total_order_value: { type: Number,},
     products: [{  
