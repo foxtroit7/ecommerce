@@ -153,29 +153,57 @@ router.delete('/delete-product/:product_id',verifyToken, async (req, res) => {
 
 
 /**
- * 🔍 GET: Search products by name
+ * 🔍 GET: Search products by name (fuzzy + sorted by relevance)
  * @route GET /products/search?name=
  */
 router.get('/products/search', verifyToken, async (req, res) => {
-    try {
-        const { name } = req.query;
-        if (!name) {
-            return res.status(400).json({ message: 'Product name is required' });
-        }
-
-        const products = await Product.find({
-            product_name: { $regex: name, $options: 'i' } // Case-insensitive search
-        });
-
-        if (products.length === 0) {
-            return res.status(404).json({ message: 'No products found' });
-        }
-
-        res.status(200).json(products);
-    } catch (error) {
-        console.error('Error searching for products:', error);
-        res.status(500).json({ message: 'Internal Server Error' });
+  try {
+    const { name } = req.query;
+    if (!name) {
+      return res.status(400).json({ message: 'Product name is required' });
     }
+
+    const searchTerm = name.toLowerCase();
+    const regex = new RegExp(searchTerm, 'i');
+
+    // Get all matching products using regex
+    const matchedProducts = await Product.find({
+      product_name: { $regex: regex }
+    });
+
+    // Separate: wordStartsWith and others
+    const startsWith = [];
+    const contains = [];
+
+    matchedProducts.forEach(product => {
+      const words = product.product_name.toLowerCase().split(/\s+/);
+      if (words.some(word => word.startsWith(searchTerm))) {
+        startsWith.push(product);
+      } else {
+        contains.push(product);
+      }
+    });
+
+    // Optional: sort alphabetically
+    startsWith.sort((a, b) => a.product_name.localeCompare(b.product_name));
+    contains.sort((a, b) => a.product_name.localeCompare(b.product_name));
+
+    const sortedProducts = [...startsWith, ...contains];
+
+    if (sortedProducts.length === 0) {
+      return res.status(404).json({ message: 'No products found' });
+    }
+
+    // Debug
+    console.log('Search Term:', searchTerm);
+    console.log('StartsWith:', startsWith.map(p => p.product_name));
+    console.log('Contains:', contains.map(p => p.product_name));
+
+    res.status(200).json(sortedProducts);
+  } catch (error) {
+    console.error('Error searching for products:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
 });
 
 
