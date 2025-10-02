@@ -41,15 +41,42 @@ router.post('/create-product',verifyToken, upload.single('image'), async (req, r
  * 🆕 GET: Fetch all products
  * @route GET /products
  */
-router.get('/get-product',verifyToken, async (req, res) => {
+router.get('/get-product', verifyToken, async (req, res) => {
     try {
-        const products = await Product.find();
-        res.status(200).json(products);
+        let { page, limit } = req.query;
+
+        // Default: no pagination
+        if (page && limit) {
+            page = parseInt(page) || 1;
+            limit = parseInt(limit) || 10;
+
+            const skip = (page - 1) * limit;
+            const products = await Product.find()
+                .skip(skip)
+                .limit(limit);
+
+            const total = await Product.countDocuments();
+
+            return res.status(200).json({
+                products,
+                pagination: {
+                    total,
+                    page,
+                    limit,
+                    totalPages: Math.ceil(total / limit)
+                }
+            });
+        } else {
+            // No pagination - return all
+            const products = await Product.find();
+            return res.status(200).json(products);
+        }
     } catch (error) {
         console.error('Error fetching products:', error);
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
+
 /**
  * 🆕 GET: Fetch products by `category_id`
  * @route GET /products/category/:category_id
