@@ -70,7 +70,7 @@ router.put('/cancel/:user_id/:booking_id', verifyToken, async (req, res) => {
         }
 
         // Update status to 'Cancelled'
-        booking.status = 'Cancelled';
+        booking.order_status = 'Cancelled';
         await booking.save();
 
         res.status(200).json({ message: 'Booking cancelled successfully', booking });
