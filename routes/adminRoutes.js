@@ -3,7 +3,7 @@ const { generateToken } = require("../utils/generateToken"); // Import token gen
 const router = express.Router();
 
 const HARD_CODED_EMAIL = "admin@gmail.com";
-const HARD_CODED_PASSWORD = "Saigrocery@7777";
+const HARD_CODED_PASSWORD = "Saocery@7777";
 
 // Admin Login Route
 router.post("/admin-login", async (req, res) => {
